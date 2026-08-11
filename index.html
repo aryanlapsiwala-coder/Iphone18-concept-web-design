@@ -30,12 +30,6 @@
 
         body.locked { overflow: hidden; }
 
-        /* UI Overlays */
-        #flash-overlay {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: #fff; z-index: 9999; opacity: 0; pointer-events: none;
-        }
-
         /* Nav */
         .navbar {
             position: fixed; top: 0; left: 0; width: 100%; height: 52px;
@@ -58,11 +52,12 @@
         
         .apple-logo { width: 16px; height: 16px; fill: var(--text-primary); }
         
-        .btn-nav-outline, .btn-nav-solid {
-            font-size: 12px; padding: 4px 12px; border-radius: 20px; text-decoration: none; font-weight: 500;
+        .btn-nav-outline, .btn-nav-solid, .btn-nav-screen {
+            font-size: 12px; padding: 4px 12px; border-radius: 20px; text-decoration: none; font-weight: 500; cursor: pointer;
         }
-        .btn-nav-outline { border: 1px solid var(--accent-blue); color: var(--accent-blue); }
-        .btn-nav-solid { background: var(--accent-blue); color: #fff; }
+        .btn-nav-outline { border: 1px solid rgba(255,255,255,0.25); color: #fff; }
+        .btn-nav-solid { background: #0071e3; color: #fff; }
+        .btn-nav-screen { border: 1px solid var(--text-secondary); color: var(--text-secondary); }
 
         /* Typography */
         .eyebrow { font-size: 15px; font-weight: 600; letter-spacing: 0.02em; margin-bottom: 16px; }
@@ -74,14 +69,15 @@
         /* Scrollytelling Panels */
         #webgl-canvas {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            z-index: 1; pointer-events: none; outline: none;
+            z-index: 1; pointer-events: none; outline: none; cursor: grab;
         }
+        #webgl-canvas.grabbing { cursor: grabbing; }
         .scroll-track { position: relative; z-index: 2; width: 100%; }
         
         section { padding: 120px max(20px, 5%); position: relative; max-width: 1200px; margin: 0 auto; }
         
         .panel { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 0 5%; }
-        .panel-content { max-width: 480px; pointer-events: auto; }
+        .panel-content { max-width: 480px; pointer-events: auto; position: relative; z-index: 10;}
         .align-left { align-items: flex-start; text-align: left; }
         .align-right { align-items: flex-end; text-align: left; }
         .spacer { height: 80vh; pointer-events: none; }
@@ -115,54 +111,87 @@
         #lock-hint { position: absolute; bottom: 40px; left: 0; right: 0; z-index: 2; text-align: center; font-size: 13px; font-weight: 600; letter-spacing: 0.1em; opacity: 0.8; animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 0.8; transform: translateY(0); } 50% { opacity: 0.4; transform: translateY(-5px); } }
 
-        /* GSAP Classes */
-        .gsap-slide-up, .gsap-slide-left, .gsap-slide-right, .gsap-fade { will-change: transform, opacity; }
+        /* Hero */
+        .hero-bg {
+            position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.55; z-index: 0; pointer-events: none;
+        }
+        .hero-fade { opacity: 0; }
+        .h1-clip { background: linear-gradient(to right, #ffffff, #a1a1a8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--border-card); margin-top: 40px; font-family: monospace; font-size: 12px; }
+        .hero-grid > div { background: var(--bg-card); padding: 12px; }
+        .system-status { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--accent-warm); font-family: monospace; margin-bottom: 12px; text-transform: uppercase; }
+        .status-dot { width: 6px; height: 6px; background: var(--accent-warm); border-radius: 50%; animation: blink 2s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-        /* Custom Sections */
+        /* GSAP Classes */
+        .gsap-slide-up, .gsap-slide-left, .gsap-slide-right, .gsap-fade { will-change: transform, opacity; opacity: 0; }
+
+        /* Color Studio */
         .color-studio {
-            background: rgba(255,255,255,0.04); border: 1px solid var(--border-card); border-radius: 28px;
+            background: rgba(20,21,25,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 32px;
             padding: 60px 40px; text-align: center; max-width: 600px; margin: 0 auto;
-            backdrop-filter: blur(20px);
+            backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); pointer-events: auto;
         }
         .swatch-container { display: flex; justify-content: center; gap: 16px; margin: 30px 0; }
-        .swatch { width: 44px; height: 44px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
+        .swatch { width: 48px; height: 48px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: 0.2s; position: relative; }
         .swatch.active { border-color: #fff; transform: scale(1.1); }
-        
+        .cta-btn { background: #fff; color: #000; padding: 14px 28px; border-radius: 30px; font-weight: 600; text-decoration: none; display: inline-block; margin-top: 20px; transition: 0.2s; }
+
+        /* Worth the Upgrade */
         .upgrade-cols { display: flex; gap: 60px; margin-top: 60px; }
         .upgrade-left { flex: 1; }
         .upgrade-right { flex: 1.5; display: flex; gap: 16px; }
         .upgrade-card { 
             flex: 1; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 20px;
-            padding: 24px; min-height: 220px; display: flex; flex-direction: column; justify-content: space-between;
+            padding: 24px; min-height: 220px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;
         }
-        
+        .upgrade-card img { position: absolute; inset: 0; width: 100%; height: 160px; object-fit: cover; border-radius: 16px; bottom: 0; top: auto; }
+
+        /* Grid */
         .grid-6-cards, .grid-8-cards {
             display: grid; gap: 2px; background: var(--divider); border: 1px solid var(--divider); border-radius: 20px; overflow: hidden;
             margin-top: 60px;
         }
         .grid-6-cards { grid-template-columns: repeat(3, 1fr); }
         .grid-8-cards { grid-template-columns: repeat(4, 1fr); }
-        .grid-cell { background: var(--bg-card); padding: 32px 24px; transition: background 0.3s; }
+        .grid-cell { background: var(--bg-card); padding: 32px 24px; transition: background 0.3s; position: relative; }
         .grid-cell:hover { background: var(--bg-card-hover); }
         .cell-icon { font-size: 24px; margin-bottom: 12px; }
         .cell-title { font-size: 19px; font-weight: 600; margin-bottom: 8px; }
         .cell-desc { font-size: 15px; color: var(--text-secondary); line-height: 1.4; }
         
-        .camera-island-illus { width: 100%; max-width: 600px; margin: 60px auto 20px; display: block; }
-        .lens-labels { display: flex; justify-content: space-around; max-width: 500px; margin: 0 auto 60px; font-size: 12px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+        /* Cameras */
+        .camera-hero { width: 100%; height: 60vh; object-fit: cover; object-position: center; border-radius: 30px; margin: 40px 0; transform-origin: center; will-change: transform; }
+        .camera-illus-container { position: relative; margin-top: 60px; }
+        .camera-illus-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 20px; opacity: 0.6; z-index: 0; }
+        .camera-illus-bg::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.5); z-index: 1; border-radius: 20px; }
+        .camera-stat { position: relative; z-index: 2; padding: 60px 40px; display: flex; justify-content: flex-end; align-items: center; }
+        .camera-side-img { position: absolute; left: -5%; bottom: 0; height: 80%; object-fit: contain; opacity: 0.9; z-index: 2; }
         
         .camera-modes { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 40px; }
         .mode-chip { background: rgba(255,255,255,0.06); border: 1px solid var(--border-card); padding: 10px 18px; border-radius: 30px; font-size: 14px; font-weight: 500; transition: background 0.3s; }
         .mode-chip:hover { background: rgba(255,255,255,0.12); }
         
-        .perf-layout { margin-top: 60px; border-top: 1px solid var(--divider); }
-        .perf-row { display: flex; border-bottom: 1px solid var(--divider); }
-        .perf-col { flex: 1; padding: 40px 30px; border-right: 1px solid var(--divider); }
+        /* Performance */
+        .perf-columns-container { position: relative; margin-top: 60px; border-radius: 24px; overflow: hidden; border: 1px solid var(--divider); }
+        .perf-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.25; z-index: 0; }
+        .perf-layout { position: relative; z-index: 1; display: flex; background: rgba(0,0,0,0.4); backdrop-filter: blur(10px); }
+        .perf-col { flex: 1; padding: 40px 30px; border-right: 1px solid rgba(255,255,255,0.08); }
         .perf-col:last-child { border-right: none; }
+        .perf-col h3 { font-size: 20px; font-weight: 600; margin-bottom: 12px; }
+        .perf-col hr { border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 20px 0; }
         
+        .batt-row { display: flex; margin-top: 40px; gap: 20px; }
+        .batt-col { flex: 1; }
+        .batt-label { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); }
+        .batt-num { font-size: clamp(2.5rem, 4vw, 3.5rem); font-weight: 700; color: var(--accent-warm); margin: 5px 0; }
+        .batt-desc { font-size: 14px; color: var(--text-secondary); }
+        
+        /* Connectivity */
         .emoji-row { display: flex; align-items: center; gap: 30px; padding: 30px 0; border-bottom: 1px solid var(--divider); }
         .emoji-row .emoji { font-size: 40px; }
         
+        /* Tech Specs Grid */
         .tech-specs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1px; background: var(--border-card); border-radius: 20px; overflow: hidden; margin-top: 40px; }
         .spec-card { background: #0a0a0a; padding: 24px; transition: 0.3s; }
         .spec-card:hover { background: #111; }
@@ -173,10 +202,10 @@
         .footer-links a:hover { color: #fff; }
 
         @media (max-width: 900px) {
-            .upgrade-cols, .perf-row { flex-direction: column; }
+            .upgrade-cols, .perf-layout, .batt-row { flex-direction: column; }
             .grid-6-cards { grid-template-columns: repeat(2, 1fr); }
             .grid-8-cards { grid-template-columns: repeat(2, 1fr); }
-            .perf-col { border-right: none; border-bottom: 1px solid var(--divider); }
+            .perf-col { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.08); }
         }
         @media (max-width: 600px) {
             .upgrade-right { flex-direction: column; }
@@ -185,9 +214,6 @@
     </style>
 </head>
 <body class="locked">
-
-    <!-- Flash Overlay -->
-    <div id="flash-overlay"></div>
 
     <!-- WebGL Background -->
     <canvas id="webgl-canvas"></canvas>
@@ -212,12 +238,13 @@
     <nav class="navbar" id="navbar">
         <div class="nav-left">
             <svg class="apple-logo" viewBox="0 0 170 170"><path d="M150.37,130.25c-2.45,5.66-5.35,10.87-8.71,15.66-4.56,6.53-8.33,11.05-11.3,13.56-4.36,3.67-8.99,5.5-13.9,5.5-3.32,0-7.39-1.07-12.22-3.21-4.83-2.14-9.35-3.21-13.56-3.21-4.11,0-8.66,1.07-13.66,3.21-5.01,2.14-9.06,3.21-12.17,3.21-4.71,0-9.22-1.74-13.53-5.22-3.37-2.61-7.29-7.29-11.75-14.04-8.08-12.18-13.79-24.87-17.15-38.07-3.37-13.21-3.37-25.26,0-36.16,3.62-11.74,9.66-20.76,18.11-27.06,5.3-3.83,11.23-5.74,17.78-5.74,6.54,0,13.06,1.93,19.57,5.79,4.28,2.5,7.98,3.75,11.1,3.75,3.31,0,7.1-1.25,11.35-3.75,6.01-3.51,12.23-5.27,18.67-5.27,6.34,0,12.02,1.69,17.04,5.07,3.32,2.29,6.23,5.19,8.73,8.68-12.03,7.31-18.06,16.89-18.11,28.74-.06,9.15,2.99,16.79,9.16,22.92,6.17,6.13,13.74,9.67,22.71,10.63-2.28,7.3-5.32,14.39-9.11,21.26z"/><path d="M112.03,26.49c-4.41-5.37-6.62-12.12-6.62-20.25,0-.56,.04-1.24,.11-2.04,6.7,.52,12.98,3.29,18.84,8.31,3.61,3.06,6.33,6.86,8.16,11.4,1.82,4.54,2.73,9.08,2.73,13.62,0,.89-.04,1.69-.11,2.41-6.93-.65-13.25-3.52-18.96-8.61-1.63-1.46-3.02-3.07-4.15-4.84z"/></svg>
+            <span style="font-weight: 600; margin-left: 8px;">iPhone 18</span>
         </div>
         <div class="nav-center">
-            <span>iPhone 18</span>
             <span class="nav-section" id="nav-section">Overview</span>
         </div>
         <div class="nav-right">
+            <button class="btn-nav-screen" id="btn-toggle-screen">Screen On</button>
             <a href="#" class="btn-nav-outline">Explore</a>
             <a href="#" class="btn-nav-solid">Buy</a>
         </div>
@@ -228,10 +255,17 @@
         
         <!-- Section 1: Hero -->
         <section class="panel align-left" id="sec-hero" data-nav-label="Pro, perfected.">
-            <div class="panel-content gsap-fade">
-                <div class="eyebrow color-warm">iPhone 18</div>
-                <h1 class="headline" style="font-size: clamp(3.5rem, 8vw, 7.5rem);">Pro, perfected.</h1>
-                <p class="subheadline">The power of a desktop. The beauty of aerospace-grade titanium. Seamlessly engineered.</p>
+            <img src="assets/hero.png" class="hero-bg" alt="iPhone 18 Hero">
+            <div class="panel-content">
+                <div class="system-status hero-fade"><div class="status-dot"></div> A20 PRO SYSTEM SECURE</div>
+                <div class="eyebrow color-warm hero-fade">iPhone 18</div>
+                <h1 class="headline h1-clip hero-fade" style="font-size: clamp(3.5rem, 8vw, 7.5rem);">Pro, perfected.</h1>
+                <div class="hero-grid hero-fade">
+                    <div>Display<br>ProMotion 2.0</div>
+                    <div>Chip<br>A20 Pro Bionic</div>
+                    <div>Camera<br>200MP Fusion</div>
+                    <div>Visor<br>OLED Context</div>
+                </div>
             </div>
         </section>
 
@@ -261,26 +295,29 @@
 
         <!-- Section 4: Color Studio -->
         <section data-nav-label="Finishes">
-            <div class="color-studio gsap-slide-up">
+            <div class="color-studio gsap-slide-up" id="color-studio">
                 <h2 class="headline" style="font-size: 2rem;">Six stunning finishes.</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">Drag to rotate</p>
                 <div class="swatch-container">
-                    <div class="swatch active" data-color="#2a343c" data-name="Titanium Blue" style="background:#2a343c;"></div>
-                    <div class="swatch" data-color="#1c1c1e" data-name="Space Black" style="background:#1c1c1e;"></div>
-                    <div class="swatch" data-color="#f0f0f5" data-name="Ceramic White" style="background:#f0f0f5;"></div>
-                    <div class="swatch" data-color="#7a1515" data-name="Product RED" style="background:#7a1515;"></div>
-                    <div class="swatch" data-color="#b87333" data-name="Desert Titanium" style="background:#b87333;"></div>
-                    <div class="swatch" data-color="#4a6741" data-name="Sage Green" style="background:#4a6741;"></div>
+                    <div class="swatch active" data-color="#2a343c" data-glass="#1f272d" data-name="Titanium Blue" style="background:#2a343c;"></div>
+                    <div class="swatch" data-color="#1c1c1e" data-glass="#111111" data-name="Space Black" style="background:#1c1c1e;"></div>
+                    <div class="swatch" data-color="#f0f0f5" data-glass="#e0e0e5" data-name="Ceramic White" style="background:#f0f0f5;"></div>
+                    <div class="swatch" data-color="#7a1515" data-glass="#5a0a0a" data-name="Product RED" style="background:#7a1515;"></div>
+                    <div class="swatch" data-color="#b87333" data-glass="#985313" data-name="Desert Titanium" style="background:#b87333;"></div>
+                    <div class="swatch" data-color="#4a6741" data-glass="#2a4721" data-name="Sage Green" style="background:#4a6741;"></div>
                 </div>
                 <div id="studio-color-name" style="font-size: 17px; font-weight: 500;">Titanium Blue</div>
             </div>
         </section>
+
+        <div class="spacer"></div>
 
         <!-- Section 5: Worth the Upgrade -->
         <section data-nav-label="Worth the Upgrade?">
             <div class="upgrade-cols">
                 <div class="upgrade-left gsap-slide-up">
                     <h2 class="headline" style="font-size: clamp(2.5rem, 4vw, 3.5rem); margin-bottom: 0;">Worth the upgrade?</h2>
-                    <div style="font-size: clamp(2.8rem, 5.5vw, 5.5rem); font-weight: 800; line-height: 1.1; margin: 10px 0;">100%.</div>
+                    <div style="font-size: clamp(4rem, 8vw, 8rem); font-weight: 800; line-height: 1.1; margin: 10px 0;">100%.</div>
                     <p class="subheadline">A few ways iPhone 18 gives you more.</p>
                 </div>
                 <div class="upgrade-right">
@@ -291,13 +328,13 @@
                     <div class="upgrade-card gsap-slide-up" style="transition-delay: 0.2s;">
                         <div>
                             <div style="font-size: 12px; font-weight: 600; text-transform: uppercase;">Up to</div>
-                            <div class="color-warm" style="font-size: 40px; font-weight: 700; line-height: 1;">42hr</div>
+                            <div class="color-warm" style="font-size: 40px; font-weight: 700; line-height: 1;">42 more hours <span style="font-size: 30px;">🔋</span></div>
                         </div>
-                        <div style="font-size: 15px; color: var(--text-secondary);">video playback on iPhone 18 Pro Max</div>
+                        <div style="font-size: 15px; color: var(--text-secondary);">video playback</div>
                     </div>
                     <div class="upgrade-card gsap-slide-up" style="transition-delay: 0.3s;">
-                        <div style="font-size: 28px;">📷</div>
-                        <div style="font-size: 17px; font-weight: 600;">200MP cameras & Camera Control 2.0</div>
+                        <img src="assets/orange_card.png" alt="Camera">
+                        <div style="position: relative; z-index: 10; font-size: 17px; font-weight: 600;">200MP cameras</div>
                     </div>
                 </div>
             </div>
@@ -320,7 +357,7 @@
                     <div class="cell-desc">Dynamic Island narrows 40% for an immersive screen.</div>
                 </div>
                 <div class="grid-cell gsap-fade">
-                    <div class="cell-icon">✨</div>
+                    <div class="cell-title" style="font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 5px;">144Hz</div>
                     <div class="cell-title">ProMotion 2</div>
                     <div class="cell-desc">1–144Hz adaptive refresh and 4000 nit peak outdoor brightness.</div>
                 </div>
@@ -346,48 +383,23 @@
         <section data-nav-label="Cameras">
             <div class="eyebrow color-warm gsap-slide-up">Cameras</div>
             <h2 class="headline gsap-slide-up">A big zoom forward.</h2>
-            <p class="subheadline gsap-slide-up">The most capable camera system ever in an iPhone.</p>
+            <img src="assets/camera_macro.png" class="camera-hero scroll-scale" alt="Macro Camera">
             
-            <div class="gsap-slide-up" style="margin: 40px 0;">
-                <div style="font-size: 14px; font-weight: 700; text-transform: uppercase;">Up to</div>
-                <div class="color-warm" style="font-size: clamp(5rem, 10vw, 9rem); font-weight: 800; line-height: 1;">25&times;</div>
-                <div style="font-size: 18px; font-weight: 600; letter-spacing: 0.05em;">optical-quality zoom</div>
+            <div class="camera-illus-container">
+                <div class="camera-illus-bg">
+                    <img src="assets/internal.png" style="width: 100%; height: 100%; object-fit: cover;" alt="Internal">
+                </div>
+                <img src="assets/grey_camera.png" class="camera-side-img gsap-slide-right" alt="Grey Camera">
+                <div class="camera-stat gsap-slide-left">
+                    <div style="text-align: right;">
+                        <div style="font-size: 14px; font-weight: 700; text-transform: uppercase;">Up to</div>
+                        <div class="color-warm" style="font-size: clamp(5rem, 10vw, 9rem); font-weight: 800; line-height: 1;">25&times;</div>
+                        <div style="font-size: 18px; font-weight: 600; letter-spacing: 0.05em;">optical-quality zoom</div>
+                    </div>
+                </div>
             </div>
 
-            <!-- SVG Camera Island -->
-            <svg class="camera-island-illus gsap-slide-up" viewBox="0 0 400 300">
-                <rect x="50" y="20" width="300" height="260" rx="55" fill="#111" stroke="#2a2a2a" stroke-width="2"/>
-                <rect x="55" y="25" width="290" height="250" rx="50" fill="#0a0a0c"/>
-                
-                <!-- Ultra Wide -->
-                <g transform="translate(120, 90)">
-                    <circle cx="0" cy="0" r="45" fill="#111" stroke="#222" stroke-width="2"/>
-                    <circle cx="0" cy="0" r="22" fill="#000"/>
-                    <path d="M-15,-15 A 25 25 0 0 1 15,-15" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3"/>
-                </g>
-                <!-- Telephoto -->
-                <g transform="translate(280, 90)">
-                    <circle cx="0" cy="0" r="45" fill="#111" stroke="#222" stroke-width="2"/>
-                    <circle cx="0" cy="0" r="22" fill="#000"/>
-                    <rect x="-8" y="-8" width="16" height="16" fill="#050505" rx="3"/>
-                    <path d="M-15,-15 A 25 25 0 0 1 15,-15" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3"/>
-                </g>
-                <!-- Main Fusion -->
-                <g transform="translate(200, 200)">
-                    <circle cx="0" cy="0" r="55" fill="#111" stroke="#222" stroke-width="2"/>
-                    <circle cx="0" cy="0" r="30" fill="#000"/>
-                    <path d="M-20,-20 A 32 32 0 0 1 20,-20" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="4"/>
-                </g>
-                
-                <circle cx="200" cy="65" r="12" fill="#fff" opacity="0.9" filter="drop-shadow(0 0 5px rgba(255,255,255,0.5))"/>
-                <circle cx="280" cy="190" r="8" fill="#111" stroke="#333"/>
-                <circle cx="120" cy="190" r="4" fill="#333"/>
-            </svg>
-            <div class="lens-labels gsap-fade">
-                <span>Ultra Wide</span><span>Main Fusion</span><span>Telephoto</span>
-            </div>
-
-            <div class="grid-6-cards" style="margin-top: 0;">
+            <div class="grid-6-cards" style="margin-top: 20px;">
                 <div class="grid-cell gsap-slide-left">
                     <div class="cell-title">Main 200MP Fusion</div>
                     <div class="cell-desc">f/1.6, sensor-shift OIS 3.0, 100% focus pixels, pixel binning.</div>
@@ -418,48 +430,53 @@
         <!-- Section 8: Performance -->
         <section data-nav-label="Performance">
             <div class="eyebrow color-warm gsap-slide-up">Performance</div>
-            <h2 class="headline gsap-slide-up">New dimensions in power.</h2>
-            <p class="subheadline gsap-slide-up" style="max-width: 700px; margin: 0 auto; line-height: 1.5;">
-                Whether you're working with intensive graphics or massive media files, iPhone 18 offers blazing-fast performance with advanced cooling. An Apple-designed laser-welded vapour chamber works with the titanium unibody to efficiently move heat away from the A20 Pro chip, allowing for even higher sustained performance*. This breakthrough in thermal management is key to the most powerful iPhone ever created.
+            <h2 class="headline gsap-slide-up" style="text-align: center;">New dimensions in power.</h2>
+            <p class="subheadline gsap-slide-up" style="max-width: 700px; margin: 0 auto; line-height: 1.5; text-align: center;">
+                Whether you're working with intensive graphics or massive media files, iPhone 18 offers blazing-fast performance with advanced cooling. An Apple-designed vapour chamber works with the titanium unibody to efficiently move heat away from the A20 Pro chip, allowing for <strong>even higher sustained performance</strong>. This breakthrough in thermal management is key to the most powerful iPhone ever created.
             </p>
             
-            <div class="perf-layout">
-                <div class="perf-row">
-                    <div class="perf-col gsap-fade">
-                        <div style="font-size: 20px; font-weight: 600; margin-bottom: 12px;">A20 Pro chip</div>
+            <div class="perf-columns-container gsap-fade">
+                <img src="assets/chip.png" class="perf-bg" alt="Chip texture">
+                <div class="perf-layout">
+                    <div class="perf-col">
+                        <h3>A20 Pro chip</h3>
+                        <hr>
                         <div style="color: var(--text-secondary); line-height: 1.5;">The Apple silicon powering iPhone 18 delivers the highest iPhone performance ever, ideal for advanced gaming and the most demanding tasks.</div>
                     </div>
-                    <div class="perf-col gsap-fade">
-                        <div style="font-size: 20px; font-weight: 600; margin-bottom: 12px;">Graphics and speed</div>
-                        <div style="color: var(--text-secondary); line-height: 1.5;">Paired with an innovative thermal design, the GPU and CPU deliver up to 40% better sustained performance.</div>
+                    <div class="perf-col">
+                        <h3>Graphics and speed</h3>
+                        <hr>
+                        <div style="color: var(--text-secondary); line-height: 1.5;">Paired with an innovative thermal design, the GPU and CPU deliver up to <strong>40% better</strong> sustained performance.</div>
                     </div>
-                    <div class="perf-col gsap-fade">
-                        <div style="font-size: 20px; font-weight: 600; margin-bottom: 12px;">Neural Accelerators</div>
+                    <div class="perf-col">
+                        <h3>Neural Accelerators</h3>
+                        <hr>
                         <div style="color: var(--text-secondary); line-height: 1.5;">With Neural Accelerators integrated into each GPU core, iPhone 18 is more powerful than ever when working with local AI models.</div>
-                    </div>
-                </div>
-                <div class="perf-row">
-                    <div class="perf-col gsap-slide-up">
-                        <div style="font-size: 12px; font-weight: 700; text-transform: uppercase;">Up to</div>
-                        <div class="color-warm" style="font-size: 32px; font-weight: 700; margin: 5px 0;">35 hours</div>
-                        <div style="color: var(--text-secondary); font-size: 14px;">video playback on iPhone 18 Pro</div>
-                    </div>
-                    <div class="perf-col gsap-slide-up" style="transition-delay: 0.1s;">
-                        <div style="font-size: 12px; font-weight: 700; text-transform: uppercase;">Up to</div>
-                        <div class="color-warm" style="font-size: 32px; font-weight: 700; margin: 5px 0;">42 hours</div>
-                        <div style="color: var(--text-secondary); font-size: 14px;">iPhone 18 Pro Max</div>
-                    </div>
-                    <div class="perf-col gsap-slide-up" style="transition-delay: 0.2s;">
-                        <div style="font-size: 12px; font-weight: 700; text-transform: uppercase;">Up to</div>
-                        <div class="color-warm" style="font-size: 32px; font-weight: 700; margin: 5px 0;">50% charge in 18 min</div>
-                        <div style="color: var(--text-secondary); font-size: 14px;">with 45W wired fast charging adapter</div>
                     </div>
                 </div>
             </div>
 
+            <div class="batt-row">
+                <div class="batt-col gsap-slide-up">
+                    <div class="batt-label">Up to</div>
+                    <div class="batt-num">35 hours</div>
+                    <div class="batt-desc">video playback on iPhone 18 Pro</div>
+                </div>
+                <div class="batt-col gsap-slide-up" style="transition-delay: 0.1s;">
+                    <div class="batt-label">Up to</div>
+                    <div class="batt-num">42 hours</div>
+                    <div class="batt-desc">video playback on iPhone 18 Pro Max</div>
+                </div>
+                <div class="batt-col gsap-slide-up" style="transition-delay: 0.2s;">
+                    <div class="batt-label">Up to</div>
+                    <div class="batt-num">50% charge in 18 min</div>
+                    <div class="batt-desc">with 45W wired fast charging adapter</div>
+                </div>
+            </div>
+
             <div class="gsap-slide-up" style="margin-top: 60px;">
-                <h2 class="headline" style="font-size: 2.5rem;">Battery life. All-time high.</h2>
-                <p class="subheadline" style="max-width: 600px;">The internal redesign allows for a significantly larger silicon-carbon battery, giving iPhone 18 Pro Max the best-ever iPhone battery life.</p>
+                <h2 class="headline" style="font-size: clamp(2.2rem, 4vw, 4rem);">Battery life. All-time high.</h2>
+                <p class="subheadline" style="max-width: 600px;">The internal redesign allows for a significantly larger silicon-carbon battery, giving iPhone 18 Pro Max the <strong>best-ever iPhone battery life</strong>.</p>
             </div>
         </section>
 
@@ -554,6 +571,7 @@
             </div>
             <p style="max-width: 600px; margin: 0 auto 20px;">* Testing conducted by Apple in August 2025 using pre-production iPhone 18 Pro Max units and software. Battery life depends on network configuration and many other factors. Actual results will vary.</p>
             <p>iPhone 18 — Concept Study &copy; 2025.</p>
+            <p id="session-uptime" style="font-family: monospace; margin-top: 10px;">SESSION 000:00:00</p>
         </footer>
 
     </div>
@@ -564,31 +582,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 
     <script>
+        gsap.registerPlugin(ScrollTrigger);
+
         // --- BOOT & LOCK SCREEN LOGIC ---
         let locked = true;
         const bootScreen = document.getElementById('boot-screen');
         const lockScreen = document.getElementById('lock-screen');
         const nav = document.getElementById('navbar');
         
-        function updateClock() {
-            const d = new Date();
-            document.getElementById('lock-time').textContent = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-            document.getElementById('lock-date').textContent = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-        }
-        updateClock(); setInterval(updateClock, 1000);
-
-        function unlock() {
-            if(!locked) return;
-            locked = false;
-            gsap.to(lockScreen, { y: "-100%", duration: 0.8, ease: "power3.inOut" });
-            document.body.classList.remove('locked');
-            nav.classList.add('visible');
-        }
-        lockScreen.addEventListener('click', unlock);
-        window.addEventListener('wheel', unlock, {passive: true});
-        window.addEventListener('touchstart', unlock, {passive: true});
-
-        // Boot sequence
+        // boot screen animation
         gsap.to("#boot-logo", {opacity: 1, duration: 1});
         gsap.to(".boot-bar", {opacity: 1, duration: 0.5, delay: 0.5});
         gsap.to("#boot-fill", {width: "100%", duration: 1.5, delay: 1, ease: "power1.inOut"});
@@ -597,51 +599,68 @@
             gsap.to(lockScreen, {opacity: 1, duration: 0.5});
             lockScreen.style.pointerEvents = 'auto';
         }});
+        
+        function updateClock() {
+            const d = new Date();
+            document.getElementById('lock-time').textContent = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+            document.getElementById('lock-date').textContent = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+        }
+        updateClock(); setInterval(updateClock, 1000);
 
-        // Idle Relock Watchdog (10s)
-        let lastActivity = Date.now();
-        ['mousemove','click','touchstart','wheel','keydown','scroll'].forEach(e => {
-            window.addEventListener(e, () => { lastActivity = Date.now(); }, {passive: true});
-        });
+        let sessionStart = Date.now();
         setInterval(() => {
-            if (!locked && bootScreen.style.display === 'none' && (Date.now() - lastActivity > 10000)) {
-                locked = true;
-                nav.classList.remove('visible');
-                document.body.classList.add('locked');
-                window.scrollTo({top: 0, behavior: 'smooth'});
-                gsap.fromTo(lockScreen, {y: "-100%"}, {y: "0%", duration: 0.8, ease: "power3.inOut"});
-            }
+            let diff = Math.floor((Date.now() - sessionStart) / 1000);
+            let h = String(Math.floor(diff / 3600)).padStart(3, '0');
+            let m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+            let s = String(diff % 60).padStart(2, '0');
+            document.getElementById('session-uptime').textContent = `SESSION ${h}:${m}:${s}`;
         }, 1000);
 
-        // --- THREE.JS SCENE ---
+        // --- THREE.JS SCENE SETUP ---
         const canvas = document.getElementById('webgl-canvas');
-        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        const aspect = window.innerWidth / window.innerHeight;
+        const camera = new THREE.PerspectiveCamera(32, aspect, 0.1, 100);
+        camera.position.set(0, 0, 14);
+
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.15;
+        renderer.toneMappingExposure = 1.2;
+        renderer.outputEncoding = THREE.sRGBEncoding;
 
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(32, window.innerWidth/window.innerHeight, 0.1, 100);
-        camera.position.z = 14;
 
-        // Lighting
-        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-        const key = new THREE.DirectionalLight(0xffffff, 1.2); key.position.set(5,5,5); scene.add(key);
-        const fill = new THREE.DirectionalLight(0xaabbff, 0.4); fill.position.set(-5,-2,3); scene.add(fill);
-        const rim = new THREE.SpotLight(0xffffff, 4, 0, Math.PI/4, 0.5, 1); rim.position.set(-10, 5, -5); scene.add(rim);
+        // Procedural HDRI
+        const envCanvas = document.createElement('canvas');
+        envCanvas.width = 1024; envCanvas.height = 512;
+        const envCtx = envCanvas.getContext('2d');
+        envCtx.fillStyle = '#0a0a0d'; envCtx.fillRect(0, 0, 1024, 512);
+        
+        let grad1 = envCtx.createLinearGradient(160, 60, 160, 450);
+        grad1.addColorStop(0, '#ffffff'); grad1.addColorStop(0.5, '#8a9ab0'); grad1.addColorStop(1, '#111318');
+        envCtx.fillStyle = grad1; envCtx.fillRect(160, 60, 300, 390);
 
-        // Materials
-        const chassisMat = new THREE.MeshPhysicalMaterial({ color: 0x2a343c, metalness: 0.9, roughness: 0.28, clearcoat: 0.15 });
-        const glassMat = new THREE.MeshPhysicalMaterial({ color: 0x050505, metalness: 0.1, roughness: 0.05, reflectivity: 0.6, ior: 1.5, clearcoat: 1 });
-        const backGlassMat = new THREE.MeshPhysicalMaterial({ color: 0x111111, metalness: 0.2, roughness: 0.2 });
+        envCtx.fillStyle = '#ffffff'; envCtx.fillRect(580, 160, 70, 180);
 
-        const phoneGroup = new THREE.Group();
-        const phoneContainer = new THREE.Group();
-        phoneContainer.add(phoneGroup);
-        scene.add(phoneContainer);
+        let grad2 = envCtx.createRadialGradient(800, 100, 20, 800, 100, 200);
+        grad2.addColorStop(0, '#fffae8'); grad2.addColorStop(1, '#0a0a0d');
+        envCtx.fillStyle = grad2;
+        envCtx.beginPath(); envCtx.arc(800, 100, 200, 0, Math.PI*2); envCtx.fill();
 
-        // Geometry helper
+        const envMap = new THREE.CanvasTexture(envCanvas);
+        envMap.mapping = THREE.EquirectangularReflectionMapping;
+        envMap.encoding = THREE.sRGBEncoding;
+        scene.environment = envMap;
+
+        // Lights
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); window.ambientLight = ambientLight; scene.add(ambientLight);
+        const keyLight = new THREE.DirectionalLight(0xffffff, 1.4); keyLight.position.set(5, 7, 7); window.keyLight = keyLight; scene.add(keyLight);
+        const fillLight = new THREE.DirectionalLight(0xdbe6ff, 0.45); fillLight.position.set(-7, -2, 5); scene.add(fillLight);
+        const rimLight = new THREE.SpotLight(0xffffff, 5.0, 0, Math.PI/4); rimLight.position.set(-10, 6, -6); rimLight.lookAt(0,0,0); window.rimLight = rimLight; scene.add(rimLight);
+        const bounceLight = new THREE.PointLight(0x2997ff, 0.5, 20); bounceLight.position.set(2, -4, 3); scene.add(bounceLight);
+
+        // Phone Geometry Helper
         function roundedBox(w, h, r) {
             const s = new THREE.Shape();
             s.moveTo(-w/2 + r, -h/2); s.lineTo(w/2 - r, -h/2); s.quadraticCurveTo(w/2, -h/2, w/2, -h/2 + r);
@@ -651,164 +670,424 @@
             return s;
         }
 
-        const extrudeOpts = { bevelEnabled: true, bevelThickness: 0.015, bevelSize: 0.015, curveSegments: 32, depth: 0.12 };
-        
+        const phoneW = 3.1, phoneH = 6.4, phoneR = 0.55;
+        const phoneShape = roundedBox(phoneW, phoneH, phoneR);
+
+        // Materials
+        const chassisMat = new THREE.MeshPhysicalMaterial({ color: 0x2a343c, metalness: 0.95, roughness: 0.22, clearcoat: 0.35, clearcoatRoughness: 0.15, envMapIntensity: 1.3 });
+        const glassMat = new THREE.MeshPhysicalMaterial({ color: 0x010102, metalness: 0.05, roughness: 0.03, clearcoat: 1.0, clearcoatRoughness: 0.02, reflectivity: 0.8, ior: 1.52 });
+        const backGlassMat = new THREE.MeshPhysicalMaterial({ color: 0x1f272d, transmission: 0.05, clearcoat: 0.75, clearcoatRoughness: 0.15 });
+        const lensCoatMat = new THREE.MeshPhysicalMaterial({ color: 0x06060c, roughness: 0.04, clearcoat: 1.0, emissive: 0x040814, emissiveIntensity: 0.3, envMapIntensity: 1.8 });
+        const internMat = new THREE.MeshPhysicalMaterial({ color: 0x0c0c0e, metalness: 0.9, roughness: 0.4 });
+        const goldMat = new THREE.MeshPhysicalMaterial({ color: 0xbd9a5a, metalness: 0.95, roughness: 0.25 });
+        const darkDetailMat = new THREE.MeshPhysicalMaterial({ color: 0x16171a, metalness: 0.8, roughness: 0.4 });
+
+        const phoneContainer = new THREE.Group();
+        const phoneGroup = new THREE.Group();
+        phoneContainer.add(phoneGroup);
+        scene.add(phoneContainer);
+
         // Chassis
-        const chassisGeo = new THREE.ExtrudeGeometry(roundedBox(3.1, 6.4, 0.55), extrudeOpts);
+        const extrudeOpts = { depth: 0.12, bevelEnabled: true, bevelThickness: 0.015, bevelSize: 0.015, curveSegments: 24 };
+        const chassisGeo = new THREE.ExtrudeGeometry(phoneShape, extrudeOpts);
         chassisGeo.translate(0, 0, -0.06);
         const chassis = new THREE.Mesh(chassisGeo, chassisMat);
-        
-        // Glass
-        const fGlass = new THREE.Mesh(new THREE.ExtrudeGeometry(roundedBox(3.07, 6.37, 0.54), {...extrudeOpts, depth:0.04}), glassMat);
-        fGlass.position.z = 0.06;
-        const bGlass = new THREE.Mesh(new THREE.ExtrudeGeometry(roundedBox(3.07, 6.37, 0.54), {...extrudeOpts, depth:0.04}), backGlassMat);
-        bGlass.position.z = -0.1;
+        phoneGroup.add(chassis);
 
-        // Visor & Camera
-        const visor = new THREE.Mesh(new THREE.ExtrudeGeometry(roundedBox(2.9, 0.9, 0.45), {...extrudeOpts, depth:0.04}), glassMat);
-        visor.position.set(0, 1.95, -0.14);
-
-        const camPlate = new THREE.Mesh(new THREE.ExtrudeGeometry(roundedBox(0.8, 0.8, 0.2), {...extrudeOpts, depth:0.04}), chassisMat);
-        camPlate.position.set(-0.95, 1.95, -0.16);
-        camPlate.name = "camera_plate";
-
-        // Lenses
-        const lensGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.05, 32); lensGeo.rotateX(Math.PI/2);
-        const lensMat = new THREE.MeshStandardMaterial({color: 0x050505, metalness:0.8, roughness:0.2});
-        const l1 = new THREE.Mesh(lensGeo, lensMat); l1.position.set(-1.1, 2.1, -0.18); l1.name = "camera_plate";
-        const l2 = new THREE.Mesh(lensGeo, lensMat); l2.position.set(-0.8, 2.1, -0.18); l2.name = "camera_plate";
-        const l3 = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.05, 32).rotateX(Math.PI/2), lensMat); l3.position.set(-0.95, 1.8, -0.18); l3.name = "camera_plate";
-
-        // Halo
-        const focusHalo = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.6, 32), new THREE.MeshBasicMaterial({color: 0x0071e3, transparent: true, opacity: 0}));
-        focusHalo.position.set(-0.95, 1.95, -0.15);
-
-        // Rear Screen Hitbox
-        const rHit = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.7), new THREE.MeshBasicMaterial({visible:false}));
-        rHit.position.set(0.6, 1.95, -0.15); rHit.rotation.y = Math.PI; rHit.name = "rear_screen";
-
-        // Real Screen Canvas
-        const rCnv = document.createElement('canvas'); rCnv.width = 600; rCnv.height = 300;
-        const rCtx = rCnv.getContext('2d'); const rTex = new THREE.CanvasTexture(rCnv);
-        const rScreenMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.8), new THREE.MeshBasicMaterial({map: rTex, transparent: true}));
-        rScreenMesh.position.set(0.6, 1.95, -0.141); rScreenMesh.rotation.y = Math.PI;
-
-        let widgetMode = 'clock';
-        function drawRearScreen() {
-            rCtx.clearRect(0,0,600,300);
-            if(widgetMode === 'clock') {
-                const d = new Date();
-                rCtx.fillStyle = '#fff'; rCtx.textAlign = 'center'; rCtx.textBaseline = 'middle';
-                rCtx.font = 'bold 120px sans-serif';
-                rCtx.fillText(`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`, 300, 150);
-            } else {
-                rCtx.fillStyle = '#111'; rCtx.beginPath(); rCtx.roundRect(50,50,500,200, 40); rCtx.fill();
-                rCtx.fillStyle = '#fff'; rCtx.font = 'bold 40px sans-serif'; rCtx.textAlign = 'left';
-                rCtx.fillText("Now Playing", 100, 120);
-                rCtx.font = '30px sans-serif'; rCtx.fillStyle = '#888';
-                rCtx.fillText("Spatial Audio Track", 100, 170);
-            }
-            rTex.needsUpdate = true;
+        // Hardware Buttons
+        function makeBtn(w,h,d, x,y,z, mat=chassisMat) {
+            const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat);
+            m.position.set(x,y,z); return m;
         }
-        drawRearScreen(); setInterval(drawRearScreen, 60000);
+        chassis.add(makeBtn(0.03, 0.22, 0.05, -phoneW/2-0.01, 1.8, 0)); // Action
+        chassis.add(makeBtn(0.03, 0.42, 0.05, -phoneW/2-0.01, 1.2, 0)); // Vol Up
+        chassis.add(makeBtn(0.03, 0.42, 0.05, -phoneW/2-0.01, 0.6, 0)); // Vol Down
+        chassis.add(makeBtn(0.03, 0.68, 0.05, phoneW/2+0.01, 1.3, 0)); // Side
+        chassis.add(makeBtn(0.03, 0.3, 0.05, phoneW/2+0.005, -1.1, 0, new THREE.MeshPhysicalMaterial({color:0x111111, roughness:0.1}))); // Camera Control
 
-        phoneGroup.add(chassis, fGlass, bGlass, visor, camPlate, l1, l2, l3, focusHalo, rHit, rScreenMesh);
+        // Glass
+        const fGlassGeo = new THREE.ExtrudeGeometry(phoneShape, {...extrudeOpts, depth: 0.01});
+        const fGlass = new THREE.Mesh(fGlassGeo, glassMat); fGlass.position.z = 0.06;
+        const bGlass = new THREE.Mesh(fGlassGeo, backGlassMat); bGlass.position.z = -0.10;
+        phoneGroup.add(fGlass, bGlass);
 
-        // Raycaster for interactions
-        const raycaster = new THREE.Raycaster();
-        window.addEventListener('click', (e) => {
-            if (locked) return;
-            const mouse = new THREE.Vector2((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(phoneGroup.children);
-            if (intersects.length > 0) {
-                if (intersects[0].object.name === "camera_plate") {
-                    gsap.fromTo("#flash-overlay", {opacity: 1}, {opacity: 0, duration: 0.5});
-                } else if (intersects[0].object.name === "rear_screen") {
-                    widgetMode = widgetMode === 'clock' ? 'media' : 'clock';
-                    drawRearScreen();
-                }
+        // Smart Visor
+        const visorGeo = new THREE.ExtrudeGeometry(roundedBox(2.9, 1.7, 0.35), {...extrudeOpts, depth: 0.04});
+        visorGeo.translate(0,0,-0.14);
+        const visor = new THREE.Mesh(visorGeo, glassMat);
+        visor.position.y = 1.95;
+        phoneGroup.add(visor);
+
+        // Camera Group
+        const camGroup = new THREE.Group();
+        camGroup.position.set(0.78, 1.95, -0.14);
+        phoneGroup.add(camGroup);
+
+        const plateauGeo = new THREE.ExtrudeGeometry(roundedBox(1.55, 1.35, 0.42), {...extrudeOpts, depth: 0.03});
+        const plateau = new THREE.Mesh(plateauGeo, chassisMat);
+        plateau.position.set(0, 0, -0.005);
+        camGroup.add(plateau);
+
+        function makeLens(x, y, ringR, glassR, tint) {
+            const lGrp = new THREE.Group(); lGrp.position.set(x,y,0);
+            
+            const ring = new THREE.Mesh(new THREE.CylinderGeometry(ringR, ringR, 0.08, 32), chassisMat);
+            ring.rotation.x = Math.PI/2; ring.position.z = -0.04; lGrp.add(ring);
+            
+            const barrel = new THREE.Mesh(new THREE.CylinderGeometry(ringR-0.02, ringR-0.02, 0.08, 32), darkDetailMat);
+            barrel.rotation.x = Math.PI/2; barrel.position.z = -0.04; lGrp.add(barrel);
+            
+            const innerSphere = new THREE.Mesh(new THREE.SphereGeometry(glassR, 16, 16), new THREE.MeshPhysicalMaterial({color: tint, transmission:0.8, roughness:0.02}));
+            innerSphere.scale.z = 0.3; innerSphere.position.z = -0.02; lGrp.add(innerSphere);
+            
+            const lensGlass = new THREE.Mesh(new THREE.CylinderGeometry(glassR, glassR, 0.01, 32), lensCoatMat.clone());
+            lensGlass.rotation.x = Math.PI/2; lensGlass.position.z = -0.07; lGrp.add(lensGlass);
+            
+            return lGrp;
+        }
+
+        camGroup.add(makeLens(-0.30, 0.32, 0.27, 0.215, 0x0c1420));
+        camGroup.add(makeLens(-0.30, -0.32, 0.315, 0.25, 0x160e08));
+        camGroup.add(makeLens(0.30, 0.0, 0.255, 0.2, 0x0a0a12));
+
+        const flash = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.02, 16).rotateX(Math.PI/2), new THREE.MeshBasicMaterial({color: 0xfffae8}));
+        flash.position.set(0.56, 0.30, -0.028); camGroup.add(flash);
+        const lidar = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.02, 16).rotateX(Math.PI/2), new THREE.MeshBasicMaterial({color: 0x111111}));
+        lidar.position.set(0.56, -0.20, -0.028); camGroup.add(lidar);
+        const mic = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.02, 16).rotateX(Math.PI/2), darkDetailMat);
+        mic.position.set(0.56, 0.05, -0.028); camGroup.add(mic);
+
+        // Internals
+        const logicBoard = new THREE.Mesh(new THREE.BoxGeometry(1.2, 5.0, 0.03), internMat);
+        logicBoard.position.set(-0.6, 0, 0); phoneGroup.add(logicBoard);
+        const battery = new THREE.Mesh(new THREE.BoxGeometry(1.4, 4.0, 0.04), goldMat);
+        battery.position.set(0.65, -0.3, 0); phoneGroup.add(battery);
+
+        // Contact Shadow
+        const shadowCnv = document.createElement('canvas'); shadowCnv.width = 256; shadowCnv.height = 256;
+        const shadowCtx = shadowCnv.getContext('2d');
+        const sGrad = shadowCtx.createRadialGradient(128,128,0, 128,128,128);
+        sGrad.addColorStop(0, 'rgba(0,0,0,0.35)'); sGrad.addColorStop(1, 'transparent');
+        shadowCtx.fillStyle = sGrad; shadowCtx.fillRect(0,0,256,256);
+        const shadowPlane = new THREE.Mesh(new THREE.PlaneGeometry(6, 3), new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(shadowCnv), transparent: true, depthWrite: false}));
+        shadowPlane.rotation.x = -Math.PI / 2.6;
+        shadowPlane.position.set(0, -4.6, -0.5);
+        phoneContainer.add(shadowPlane);
+
+        // Front Screen
+        const fScreenCnv = document.createElement('canvas'); fScreenCnv.width = 600; fScreenCnv.height = 1260;
+        const fScreenCtx = fScreenCnv.getContext('2d');
+        const fScreenTex = new THREE.CanvasTexture(fScreenCnv);
+        const fScreenMat = new THREE.MeshBasicMaterial({ map: fScreenTex, transparent: true, opacity: 0, polygonOffset: true, polygonOffsetFactor: -4 });
+        window.fScreenMat = fScreenMat;
+        const fScreen = new THREE.Mesh(new THREE.PlaneGeometry(2.95, 6.25), fScreenMat);
+        fScreen.position.z = 0.106; fScreen.renderOrder = 10;
+        phoneGroup.add(fScreen);
+
+        window.screenBrightness = { value: 0 };
+        let lastSec = -1;
+        function drawFrontScreen(time) {
+            const d = new Date();
+            const sec = d.getSeconds();
+            if(sec === lastSec) return;
+            lastSec = sec;
+
+            fScreenCtx.clearRect(0,0,600,1260);
+            
+            // Aurora
+            const cx = 300 + Math.sin(time*0.5)*100;
+            const cy = 400 + Math.cos(time*0.3)*100;
+            const bgGrad = fScreenCtx.createRadialGradient(cx, cy, 50, 300, 630, 800);
+            bgGrad.addColorStop(0, 'rgba(0,113,227,1)'); bgGrad.addColorStop(0.5, 'rgba(140,80,220,1)'); bgGrad.addColorStop(1, '#000000');
+            fScreenCtx.fillStyle = bgGrad; fScreenCtx.fillRect(0,0,600,1260);
+            
+            fScreenCtx.globalAlpha = window.screenBrightness.value;
+
+            // Status bar
+            fScreenCtx.fillStyle = '#fff'; fScreenCtx.font = '600 24px sans-serif'; fScreenCtx.textAlign = 'left';
+            fScreenCtx.fillText(`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`, 50, 60);
+            fScreenCtx.textAlign = 'right'; fScreenCtx.fillText('5G  98% 🔋', 550, 60);
+
+            // Dynamic Island
+            fScreenCtx.fillStyle = '#000'; fScreenCtx.beginPath(); fScreenCtx.roundRect(210, 36, 180, 44, 22); fScreenCtx.fill();
+            fScreenCtx.fillStyle = '#111'; fScreenCtx.beginPath(); fScreenCtx.arc(360, 58, 8, 0, Math.PI*2); fScreenCtx.fill(); // cam
+            fScreenCtx.fillStyle = '#00ff00'; fScreenCtx.beginPath(); fScreenCtx.arc(330, 58, 3, 0, Math.PI*2); fScreenCtx.fill(); // sensor dot
+
+            // Clock
+            fScreenCtx.textAlign = 'center'; fScreenCtx.fillStyle = '#fff';
+            fScreenCtx.font = '300 160px sans-serif';
+            fScreenCtx.fillText(`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`, 300, 300);
+            fScreenCtx.font = '600 26px sans-serif';
+            fScreenCtx.fillText(d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }), 300, 140);
+
+            // Widgets
+            fScreenCtx.fillStyle = 'rgba(0,0,0,0.4)';
+            fScreenCtx.beginPath(); fScreenCtx.roundRect(40, 350, 160, 160, 30); fScreenCtx.fill();
+            fScreenCtx.beginPath(); fScreenCtx.roundRect(220, 350, 160, 160, 30); fScreenCtx.fill();
+            fScreenCtx.beginPath(); fScreenCtx.roundRect(400, 350, 160, 160, 30); fScreenCtx.fill();
+
+            // Activity Rings
+            fScreenCtx.lineWidth = 12; fScreenCtx.lineCap = 'round';
+            fScreenCtx.strokeStyle = '#ff2d55'; fScreenCtx.beginPath(); fScreenCtx.arc(120, 430, 50, -Math.PI/2, Math.PI); fScreenCtx.stroke();
+            fScreenCtx.strokeStyle = '#30d158'; fScreenCtx.beginPath(); fScreenCtx.arc(120, 430, 35, -Math.PI/2, Math.PI*0.5); fScreenCtx.stroke();
+            fScreenCtx.strokeStyle = '#007aff'; fScreenCtx.beginPath(); fScreenCtx.arc(120, 430, 20, -Math.PI/2, Math.PI*1.2); fScreenCtx.stroke();
+
+            // Weather
+            fScreenCtx.fillStyle = '#ffcc00'; fScreenCtx.beginPath(); fScreenCtx.arc(300, 400, 30, 0, Math.PI*2); fScreenCtx.fill();
+            fScreenCtx.fillStyle = '#fff'; fScreenCtx.font = '500 36px sans-serif'; fScreenCtx.fillText('72°', 300, 470);
+
+            // Battery
+            fScreenCtx.fillStyle = '#fff'; fScreenCtx.font = '600 24px sans-serif'; fScreenCtx.fillText('iPhone', 480, 400);
+            fScreenCtx.font = '700 48px sans-serif'; fScreenCtx.fillStyle = '#30d158'; fScreenCtx.fillText('98%', 480, 460);
+
+            // Action buttons
+            fScreenCtx.fillStyle = 'rgba(255,255,255,0.2)';
+            fScreenCtx.beginPath(); fScreenCtx.arc(80, 1160, 30, 0, Math.PI*2); fScreenCtx.fill();
+            fScreenCtx.beginPath(); fScreenCtx.arc(520, 1160, 30, 0, Math.PI*2); fScreenCtx.fill();
+            fScreenCtx.fillStyle = '#fff'; fScreenCtx.font = '24px sans-serif';
+            fScreenCtx.fillText('🔦', 80, 1170); fScreenCtx.fillText('📷', 520, 1170);
+
+            // Home indicator
+            fScreenCtx.fillStyle = '#fff'; fScreenCtx.beginPath(); fScreenCtx.roundRect(200, 1230, 200, 8, 4); fScreenCtx.fill();
+            
+            fScreenCtx.globalAlpha = 1.0;
+            fScreenTex.needsUpdate = true;
+        }
+
+        // Visor Screen
+        const rScreenCnv = document.createElement('canvas'); rScreenCnv.width = 1000; rScreenCnv.height = 500;
+        const rScreenCtx = rScreenCnv.getContext('2d');
+        const rScreenTex = new THREE.CanvasTexture(rScreenCnv);
+        const rScreen = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 1.6), new THREE.MeshBasicMaterial({map: rScreenTex}));
+        rScreen.position.set(0, 1.95, -0.141); rScreen.rotation.y = Math.PI;
+        phoneGroup.add(rScreen);
+
+        let lastPulseFrame = 0;
+        function drawRearScreen(time) {
+            // Throttle to roughly 15fps to prevent browser freeze from massive texture uploads
+            if (time - lastPulseFrame < 1/15) return;
+            lastPulseFrame = time;
+
+            const d = new Date();
+            const bgGrad = rScreenCtx.createLinearGradient(0,0,0,500);
+            bgGrad.addColorStop(0, '#0e0e11'); bgGrad.addColorStop(1, '#040404');
+            rScreenCtx.fillStyle = bgGrad; rScreenCtx.fillRect(0,0,1000,500);
+
+            rScreenCtx.fillStyle = '#fff'; rScreenCtx.textAlign = 'right'; rScreenCtx.textBaseline = 'middle';
+            rScreenCtx.font = '600 148px sans-serif';
+            rScreenCtx.fillText(`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`, 940, 160);
+            
+            rScreenCtx.font = '500 36px sans-serif';
+            rScreenCtx.fillText(d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) + ' | 72° Sunny', 940, 265);
+            rScreenCtx.font = '400 30px sans-serif'; rScreenCtx.fillStyle = '#888';
+            rScreenCtx.fillText('Meeting in 15 min', 940, 315);
+
+            rScreenCtx.beginPath();
+            const pulse = 0.5 + 0.5 * Math.sin(time * 2.4);
+            rScreenCtx.fillStyle = `rgba(41,151,255,${pulse})`;
+            rScreenCtx.arc(940, 420, 16, 0, Math.PI*2);
+            rScreenCtx.fill();
+
+            rScreenTex.needsUpdate = true;
+        }
+
+        // Particle Dust Field
+        const dustGeo = new THREE.BufferGeometry();
+        const dustCount = 800;
+        const dustPos = new Float32Array(dustCount * 3);
+        for(let i=0; i<dustCount*3; i++) dustPos[i] = (Math.random() - 0.5) * 20;
+        dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+        const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({color: 0xffffff, size: 0.02, opacity: 0.35, transparent: true}));
+        scene.add(dust);
+
+        // Initial Transform for boot
+        phoneContainer.position.set(0, -15, 0);
+        phoneContainer.rotation.set(-0.35, 0.75, 0.08);
+
+        // Screen Toggle
+        document.getElementById('btn-toggle-screen').addEventListener('click', () => {
+            const on = fScreenMat.opacity > 0.5;
+            gsap.to(fScreenMat, {opacity: on ? 0 : 1, duration: 0.3});
+        });
+
+        window.screenBrightness = { value: 0 };
+        // Cinematic Reveal
+        function cinematicReveal() {
+            const tl = gsap.timeline();
+            tl.to(phoneContainer.position, { y: 0, duration: 3.2, ease: "power2.out" }, 0);
+            tl.to(phoneContainer.rotation, { x: -0.1, y: 0.45, z: 0.02, duration: 3.2, ease: "power2.out" }, 0);
+            
+            tl.fromTo(keyLight.position, {x:-10, y:6, z:3}, {x:8, y:7, z:7, duration: 2.2, ease: "power1.inOut"}, 0);
+            tl.fromTo(keyLight, {intensity: 0.15}, {intensity: 1.4, duration: 2.2}, 0);
+            tl.fromTo(ambientLight, {intensity: 0.05}, {intensity: 0.5, duration: 2.0}, 0);
+
+            tl.to(phoneContainer.rotation, { y: 0, duration: 2.2, ease: "power2.inOut" }, 1.4);
+            
+            tl.to(window.screenBrightness, { value: 1, duration: 1.2 }, 1.2);
+            tl.to(fScreenMat, { opacity: 1, duration: 1.2 }, 1.2);
+
+            tl.to(".hero-fade", { opacity: 1, stagger: 0.15, duration: 1, ease: "power2.out" }, 2.4);
+            tl.to(".navbar", { opacity: 1, duration: 1 }, 3.2);
+        }
+
+        // Unlock
+        function unlock() {
+            if(!locked) return;
+            locked = false;
+            gsap.to(lockScreen, { y: "-100%", duration: 0.8, ease: "power3.inOut" });
+            document.body.classList.remove('locked');
+            cinematicReveal();
+            setTimeout(() => { document.body.style.overflowY = 'auto'; }, 3200);
+        }
+        lockScreen.addEventListener('click', unlock);
+        setTimeout(unlock, 5000); // auto unlock after boot completes
+
+        // Scroll driven animation
+        gsap.to(phoneGroup.rotation, {
+            y: Math.PI * 2,
+            scrollTrigger: {
+                trigger: '.scroll-track', start: 'top top', end: 'bottom bottom', scrub: 1.5
             }
         });
 
-        // Mouse parallax
-        let mouseX = 0, mouseY = 0;
+        // Mouse Parallax & Drag
+        let targetX = 0, targetY = 0;
+        let isOrbiting = false, isDragging = false, dragStartX = 0, dragStartY = 0, dragOrbitY = 0, dragOrbitX = -0.1;
+        
         window.addEventListener('mousemove', (e) => {
-            if(locked) return;
-            mouseX = (e.clientX / window.innerWidth) - 0.5;
-            mouseY = (e.clientY / window.innerHeight) - 0.5;
+            if(locked || isDragging) return;
+            targetX = (e.clientX - window.innerWidth/2) * 0.0003;
+            targetY = (e.clientY - window.innerHeight/2) * 0.0003;
         });
 
+        // Color Studio Orbit
+        ScrollTrigger.create({
+            trigger: '#color-studio', start: 'top 75%', end: 'bottom 25%',
+            onEnter: () => { isOrbiting = true; canvas.style.pointerEvents = 'auto'; },
+            onLeave: () => { isOrbiting = false; canvas.style.pointerEvents = 'none'; targetX = 0; },
+            onEnterBack: () => { isOrbiting = true; canvas.style.pointerEvents = 'auto'; },
+            onLeaveBack: () => { isOrbiting = false; canvas.style.pointerEvents = 'none'; targetX = 0; }
+        });
+
+        canvas.addEventListener('mousedown', (e) => {
+            if(!isOrbiting) return;
+            isDragging = true; canvas.classList.add('grabbing');
+            dragStartX = e.clientX; dragStartY = e.clientY;
+            dragOrbitY = phoneContainer.rotation.y;
+            dragOrbitX = phoneContainer.rotation.x;
+        });
+        window.addEventListener('mouseup', () => { isDragging = false; canvas.classList.remove('grabbing'); });
+        window.addEventListener('mousemove', (e) => {
+            if(!isDragging) return;
+            const dx = e.clientX - dragStartX; const dy = e.clientY - dragStartY;
+            targetX = dragOrbitY + dx * 0.008;
+            targetY = Math.max(-0.6, Math.min(0.6, dragOrbitX + dy * 0.005));
+        });
+
+        // Render loop
+        const clock = new THREE.Clock();
         function animate() {
             requestAnimationFrame(animate);
-            if(!locked) {
-                phoneContainer.rotation.y += (mouseX * 0.5 - phoneContainer.rotation.y) * 0.05;
-                phoneContainer.rotation.x += (mouseY * 0.5 - phoneContainer.rotation.x) * 0.05;
+            const time = clock.getElapsedTime();
+            
+            if(isOrbiting) {
+                phoneContainer.rotation.y += (targetX - phoneContainer.rotation.y) * 0.1;
+                phoneContainer.rotation.x += (targetY - phoneContainer.rotation.x) * 0.1;
+            } else {
+                phoneContainer.rotation.y += (targetX - phoneContainer.rotation.y) * 0.05;
+                phoneContainer.rotation.x += (targetY - phoneContainer.rotation.x) * 0.05;
             }
+            
+            phoneGroup.position.y = Math.sin(time * 2) * 0.0005;
+            
+            dust.rotation.y = time * 0.01;
+            dust.position.y = Math.sin(time * 0.15) * 0.3;
+
+            drawFrontScreen(time);
+            drawRearScreen(time);
+
             renderer.render(scene, camera);
         }
         animate();
 
         window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
+            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // --- GSAP SCROLL LOGIC ---
-        gsap.registerPlugin(ScrollTrigger);
-
-        gsap.to("#nav-progress-fill", {
-            width: "100%", ease: "none",
-            scrollTrigger: { trigger: "body", start: "top top", end: "bottom bottom", scrub: true }
-        });
-
-        gsap.utils.toArray('section[data-nav-label]').forEach(sec => {
-            ScrollTrigger.create({
-                trigger: sec, start: "top center", end: "bottom center",
-                onEnter: () => document.getElementById('nav-section').textContent = sec.dataset.navLabel,
-                onEnterBack: () => document.getElementById('nav-section').textContent = sec.dataset.navLabel,
+        // --- DOM INTERACTIONS ---
+        
+        // GSAP Rules
+        gsap.utils.toArray('.gsap-fade, .gsap-slide-up, .gsap-slide-left, .gsap-slide-right').forEach(el => {
+            let y = 0, x = 0;
+            if(el.classList.contains('gsap-slide-up')) y = 40;
+            if(el.classList.contains('gsap-slide-left')) x = 40;
+            if(el.classList.contains('gsap-slide-right')) x = -40;
+            
+            gsap.to(el, {
+                opacity: 1, y: 0, x: 0, duration: 0.85, ease: "power2.out",
+                scrollTrigger: { trigger: el, start: 'top 88%' }
             });
         });
 
-        const animOptions = { duration: 0.85, ease: "power2.out" };
+        // Staggers
+        gsap.fromTo(".grid-6-cards .grid-cell", {opacity:0, y:30}, {
+            opacity:1, y:0, duration: 0.85, stagger: 0.12, ease: "power2.out",
+            scrollTrigger: { trigger: ".grid-6-cards", start: "top 88%" }
+        });
+        gsap.fromTo(".grid-8-cards .grid-cell", {opacity:0, y:20}, {
+            opacity:1, y:0, duration: 0.85, stagger: 0.08, ease: "power2.out",
+            scrollTrigger: { trigger: ".grid-8-cards", start: "top 88%" }
+        });
+
+        // Camera scroll scale
+        gsap.fromTo(".scroll-scale", {scale: 1.04}, {
+            scale: 1, ease: "none",
+            scrollTrigger: { trigger: ".scroll-scale", start: "top bottom", end: "bottom top", scrub: true }
+        });
+
+        // Magnetic Hover
+        document.querySelectorAll('.swatch, .btn-nav-solid, .btn-nav-outline').forEach(el => {
+            el.addEventListener('mousemove', (e) => {
+                const rect = el.getBoundingClientRect();
+                const mx = e.clientX - rect.left - rect.width/2;
+                const my = e.clientY - rect.top - rect.height/2;
+                gsap.to(el, { x: mx*0.28, y: my*0.28, duration: 0.3 });
+            });
+            el.addEventListener('mouseleave', () => {
+                gsap.to(el, { x: 0, y: 0, duration: 0.5, ease: 'elastic.out(1,0.4)' });
+            });
+        });
+
+        // Color Studio Click
+        document.querySelectorAll('.swatch').forEach(sw => {
+            sw.addEventListener('click', (e) => {
+                document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+                e.target.classList.add('active');
+                const col = new THREE.Color(e.target.dataset.color);
+                const gCol = new THREE.Color(e.target.dataset.glass);
+                gsap.to(chassisMat.color, { r: col.r, g: col.g, b: col.b, duration: 1.0 });
+                gsap.to(backGlassMat.color, { r: gCol.r, g: gCol.g, b: gCol.b, duration: 1.0 });
+                gsap.to(phoneContainer.rotation, { y: phoneContainer.rotation.y + Math.PI*2, duration: 1.8, ease: "power2.inOut" });
+                document.getElementById('studio-color-name').textContent = e.target.dataset.name;
+            });
+        });
+
+        // Nav Progress and Section Labels
+        const progressFill = document.getElementById('nav-progress-fill');
+        const navSection = document.getElementById('nav-section');
+        const sections = document.querySelectorAll('section[data-nav-label]');
         
-        gsap.utils.toArray('.gsap-slide-up').forEach(el => {
-            gsap.fromTo(el, { opacity: 0, y: 40 }, { ...animOptions, opacity: 1, y: 0, scrollTrigger: { trigger: el, start: "top 88%" } });
-        });
-        gsap.utils.toArray('.gsap-slide-left').forEach(el => {
-            gsap.fromTo(el, { opacity: 0, x: -40 }, { ...animOptions, opacity: 1, x: 0, scrollTrigger: { trigger: el, start: "top 88%" } });
-        });
-        gsap.utils.toArray('.gsap-slide-right').forEach(el => {
-            gsap.fromTo(el, { opacity: 0, x: 40 }, { ...animOptions, opacity: 1, x: 0, scrollTrigger: { trigger: el, start: "top 88%" } });
-        });
-        gsap.utils.toArray('.gsap-fade').forEach(el => {
-            gsap.fromTo(el, { opacity: 0 }, { ...animOptions, opacity: 1, scrollTrigger: { trigger: el, start: "top 88%" } });
-        });
-
-        // Phone rotation scrub
-        gsap.to(phoneGroup.rotation, {
-            y: Math.PI * 2, x: 0.3, z: -0.1, ease: "none",
-            scrollTrigger: { trigger: ".scroll-track", start: "top top", end: "bottom bottom", scrub: 1.5 }
-        });
-
-        // Visor Halo Pulse
         ScrollTrigger.create({
-            trigger: "#sec-visor", start: "top center", end: "bottom center",
-            onEnter: () => gsap.to(focusHalo.material, { opacity: 1, duration: 0.5 }),
-            onLeave: () => gsap.to(focusHalo.material, { opacity: 0, duration: 0.5 }),
-            onEnterBack: () => gsap.to(focusHalo.material, { opacity: 1, duration: 0.5 }),
-            onLeaveBack: () => gsap.to(focusHalo.material, { opacity: 0, duration: 0.5 })
+            trigger: '.scroll-track', start: 'top top', end: 'bottom bottom',
+            onUpdate: self => { progressFill.style.width = `${self.progress * 100}%`; }
         });
 
-        // Color Studio Logic
-        document.querySelectorAll('.swatch').forEach(s => {
-            s.addEventListener('click', () => {
-                document.querySelectorAll('.swatch').forEach(el => el.classList.remove('active'));
-                s.classList.add('active');
-                const hex = s.dataset.color;
-                gsap.to(chassisMat.color, { r: new THREE.Color(hex).r, g: new THREE.Color(hex).g, b: new THREE.Color(hex).b, duration: 0.5 });
-                document.getElementById('studio-color-name').textContent = s.dataset.name;
+        sections.forEach(sec => {
+            ScrollTrigger.create({
+                trigger: sec, start: 'top 55%', end: 'bottom 55%',
+                onEnter: () => navSection.textContent = sec.dataset.navLabel,
+                onEnterBack: () => navSection.textContent = sec.dataset.navLabel
             });
         });
 
